@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Russian Dolls Gender Reveal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Google Font for playful text -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap"
+    rel="stylesheet"
+  />
+  <!-- GSAP TweenMax for animations -->
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.2/TweenMax.min.js"
+    defer
+  ></script>
+  <!-- Canvas-confetti for final celebration -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"
+    defer
+  ></script>
+  <style>
+    /* Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* Body with a simple background and a min-height to fill the screen */
+    body {
+      font-family: "Fredoka One", sans-serif;
+      background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+      color: #333;
+      min-height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start; /* top-aligned so we can control spacing easily */
+    }
+
+    /* The text display is at the top, with an extra margin-bottom for spacing */
+    #textDisplay {
+      font-size: 36px;
+      margin: 300px 0 20px; /* Extra top margin to ensure it's well above the doll */
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      z-index: 10; /* In case layering matters */
+    }
+
+    /* Center a wrapper for the doll container */
+    #dollWrapper {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+
+    /* The doll container is a fixed width so the PNG can fill it horizontally */
+    #dollContainer {
+      width: 400px;
+      overflow: hidden;
+      position: relative;
+      /* We'll animate the transform (translate/scale) on this element */
+    }
+
+    /* The doll image fits 100% of container width, preserving aspect ratio */
+    #dollImg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <!-- Text displayed at the top (always above the doll) -->
+  <div id="textDisplay">
+    Hi uncle Saif! I'm still in Mommy's tummy, but I already know you're going to be my favorite.
+  </div>
+  
+  <!-- Wrapper to help center the doll container -->
+  <div id="dollWrapper">
+    <div id="dollContainer">
+      <img id="dollImg" src="doll1.png" alt="Russian Doll" />
+    </div>
+  </div>
+  
+  <script>
+    (function(){
+      // Array of doll image filenames – ensure these files exist in the same folder.
+      var dollFiles = [
+        "doll1.png",
+        "doll2.png",
+        "doll3.png",
+        "doll4.png",
+        "doll5.png",
+        "doll6.png",
+        "doll7.png",
+        "doll8.png",
+        "doll9.png"
+      ];
+      
+      // Define scale factors so that initially the doll appears larger and then gets progressively smaller,
+      // with the final doll re-expanding to original size (1.0).
+      var scaleFactors = [1.3, 1.1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 1.0];
+      
+      // Define messages for each doll. There are 9 dolls.
+      var finalGender = "female"; // Change to "male" for a boy reveal.
+      var messages = [
+        "Hi uncle Saif! I'm still in Mommy's tummy, but I already know you're going to be my favorite.",
+        "They told me you're the cool one - the one with all the games, cards, and candy.",
+        "I heard you're hoping I'll be a boy...",
+        "But you also said you'd love me either way. That's how I know you're the best.",
+        "I'm excited for our adventures! We'll sneak snacks from the kitchen, watch cartoons past bedtime...",
+        "You'll teach me how to score goals, and we can have a burping contest!",
+        "I've been waiting to meet you, are you ready to meet me?",
+        "I am a...",
+        finalGender === "male"
+          ? "BOY! Hope you're ready to level up - your Player 2 is on the way!"
+          : "GIRL! Hope you're ready to level up - your Player 2 is on the way!"
+      ];
+      
+      var totalDolls = dollFiles.length;
+      var currentIndex = 0;
+      
+      var textDisplay = document.getElementById("textDisplay");
+      var dollWrapper = document.getElementById("dollWrapper");
+      var dollContainer = document.getElementById("dollContainer");
+      var dollImg = document.getElementById("dollImg");
+      
+      // When the first doll image loads, set the doll container's height to the image's natural height
+      // and apply the initial scale.
+      dollImg.addEventListener("load", function(){
+        dollWrapper.style.height = dollImg.offsetHeight + "px";
+        TweenMax.set(dollContainer, { scale: scaleFactors[currentIndex] });
+      });
+      
+      // Gesture detection variables
+      var lastX = null, lastY = null;
+      var swipeThreshold = 50; // Minimum pixels to trigger transition
+      var animating = false;
+      
+      // This function processes movement from mouse or touch
+      function onMove(clientX, clientY) {
+        if(animating) return;
+        if(lastX === null || lastY === null) {
+          lastX = clientX;
+          lastY = clientY;
+          return;
+        }
+        var dx = clientX - lastX;
+        var dy = clientY - lastY;
+        var distance = Math.sqrt(dx*dx + dy*dy);
+        if(distance >= swipeThreshold) {
+          triggerTransition();
+          // Reset the last position to the current one
+          lastX = clientX;
+          lastY = clientY;
+        }
+      }
+      
+      // Attach mousemove event for desktop
+      dollContainer.addEventListener("mousemove", function(e){
+         onMove(e.clientX, e.clientY);
+      });
+      
+      // Attach touchmove event for mobile devices
+      dollContainer.addEventListener("touchmove", function(e){
+         if(e.touches.length > 0){
+           var touch = e.touches[0];
+           onMove(touch.clientX, touch.clientY);
+         }
+      });
+      
+      // Optionally, reset last positions every second to avoid accidental triggers
+      setInterval(function(){
+        lastX = null;
+        lastY = null;
+      }, 1000);
+      
+      // Transition: animate the current doll off-screen, update index & text, then animate the new doll in.
+      function triggerTransition(){
+        if(animating) return;
+        animating = true;
+        
+        // Animate the dollContainer to fly left while fading out.
+        TweenMax.to(dollContainer, 0.5, {
+          x: "-100%",
+          opacity: 0,
+          ease: Power2.easeIn,
+          onComplete: function(){
+            // Advance to the next doll if not at final doll.
+            if(currentIndex < totalDolls - 1) { currentIndex++; }
+            // Update the text message.
+            textDisplay.textContent = messages[currentIndex];
+            // Update the doll image.
+            dollImg.src = dollFiles[currentIndex];
+            dollImg.onload = function(){
+              // Ensure the wrapper height adjusts to the new image.
+              dollWrapper.style.height = dollImg.offsetHeight + "px";
+            };
+            // Reset container's horizontal position.
+            TweenMax.set(dollContainer, { x: 0 });
+            // Animate the container coming in from the right with bounce.
+            TweenMax.fromTo(dollContainer, 0.5, { x: "100%", opacity: 0 }, {
+              x: "0%",
+              opacity: 1,
+              ease: Bounce.easeOut,
+              onComplete: function(){
+                // On final doll, trigger confetti.
+                if(currentIndex === totalDolls - 1){
+                  confetti({
+                    particleCount: 150,
+                    spread: 80,
+                    origin: { y: 0.6 }
+                  });
+                }
+                animating = false;
+              }
+            });
+            // Apply new scale for the nested doll effect.
+            TweenMax.to(dollContainer, 0.3, { scale: scaleFactors[currentIndex], ease: Power2.easeOut });
+          }
+        });
+      }
+      
+    })();
+  </script>
+</body>
+</html>
