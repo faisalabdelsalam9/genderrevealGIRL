@@ -2,68 +2,70 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Russian Dolls Gender Reveal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Russian Dolls Gender Reveal</title>
   <!-- Google Font for playful text -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet" />
   <!-- GSAP TweenMax for animations -->
-  <script
-    src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.2/TweenMax.min.js"
-    defer
-  ></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.2/TweenMax.min.js"></script>
   <!-- Canvas-confetti for final celebration -->
-  <script
-    src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"
-    defer
-  ></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
   <style>
-    /* Reset */
+    /* Basic Reset */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
 
-    /* Body with a simple background and a min-height to fill the screen */
-    body {
-      font-family: "Fredoka One", sans-serif;
-      background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
-      color: #333;
-      min-height: 100vh;
-      overflow: hidden;
+    /* Main flex container to center content vertically */
+    #contentWrapper {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start; /* top-aligned so we can control spacing easily */
+      justify-content: flex-start;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+      font-family: "Fredoka One", sans-serif;
+      color: #333;
+      padding-top: 40px; /* some space at the top */
+      padding-bottom: 40px; /* optional bottom padding */
     }
 
-    /* The text display is at the top, with an extra margin-bottom for spacing */
+    /* Text display: now in the flex container (not fixed) */
     #textDisplay {
-      font-size: 36px;
-      margin: 300px 0 20px; /* Extra top margin to ensure it's well above the doll */
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-      z-index: 10; /* In case layering matters */
+  font-size: 36px;
+  margin-bottom: 80px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+  text-align: center;
+  max-width: 90%;  /* Limits the width to 90% of the viewport/container */
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 10px; /* Optional: add some horizontal padding */
+}
+    
+    /* Media query for smaller screens */
+    @media (max-width: 600px) {
+      #textDisplay {
+        font-size: 24px;
+      }
     }
 
-    /* Center a wrapper for the doll container */
+    /* Doll wrapper centers the doll container horizontally */
     #dollWrapper {
-      display: flex;
-      justify-content: center;
-      width: 100%;
+      width: 400px;
+      position: relative;
     }
 
-    /* The doll container is a fixed width so the PNG can fill it horizontally */
+    /* Doll container: we animate this element */
     #dollContainer {
-      width: 400px;
+      width: 100%;
       overflow: hidden;
       position: relative;
-      /* We'll animate the transform (translate/scale) on this element */
+      /* Centered by the wrapper's normal flow */
     }
 
-    /* The doll image fits 100% of container width, preserving aspect ratio */
+    /* Doll image styles: fills container preserving aspect ratio */
     #dollImg {
       display: block;
       width: 100%;
@@ -72,21 +74,20 @@
   </style>
 </head>
 <body>
-  <!-- Text displayed at the top (always above the doll) -->
-  <div id="textDisplay">
-    Hi uncle Saif! I'm still in Mommy's tummy, but I already know you're going to be my favorite.
-  </div>
-  
-  <!-- Wrapper to help center the doll container -->
-  <div id="dollWrapper">
-    <div id="dollContainer">
-      <img id="dollImg" src="doll1.png" alt="Russian Doll" />
+  <div id="contentWrapper">
+    <div id="textDisplay">
+      Hi uncle Saif! I'm still in Mommy's tummy, but I already know you're going to be my favorite.
+    </div>
+    <div id="dollWrapper">
+      <div id="dollContainer">
+        <img id="dollImg" src="doll1.png" alt="Russian Doll" />
+      </div>
     </div>
   </div>
   
   <script>
     (function(){
-      // Array of doll image filenames – ensure these files exist in the same folder.
+      // Array of doll image filenames (largest to smallest)
       var dollFiles = [
         "doll1.png",
         "doll2.png",
@@ -98,13 +99,10 @@
         "doll8.png",
         "doll9.png"
       ];
-      
-      // Define scale factors so that initially the doll appears larger and then gets progressively smaller,
-      // with the final doll re-expanding to original size (1.0).
+      // Scale factors for nested effect: first doll a bit larger, then progressively smaller until final doll re-expands to original.
       var scaleFactors = [1.3, 1.1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 1.0];
-      
-      // Define messages for each doll. There are 9 dolls.
-      var finalGender = "female"; // Change to "male" for a boy reveal.
+      // Messages for each doll reveal step.
+      var finalGender = "female"; // "male" for "A BOY"
       var messages = [
         "Hi uncle Saif! I'm still in Mommy's tummy, but I already know you're going to be my favorite.",
         "They told me you're the cool one - the one with all the games, cards, and candy.",
@@ -127,43 +125,41 @@
       var dollContainer = document.getElementById("dollContainer");
       var dollImg = document.getElementById("dollImg");
       
-      // When the first doll image loads, set the doll container's height to the image's natural height
-      // and apply the initial scale.
+      // When the first doll loads, set the wrapper's height and initial scale.
       dollImg.addEventListener("load", function(){
         dollWrapper.style.height = dollImg.offsetHeight + "px";
         TweenMax.set(dollContainer, { scale: scaleFactors[currentIndex] });
       });
       
-      // Gesture detection variables
+      // Gesture detection variables.
       var lastX = null, lastY = null;
-      var swipeThreshold = 50; // Minimum pixels to trigger transition
+      var swipeThreshold = 50; // Minimum distance in pixels.
       var animating = false;
       
-      // This function processes movement from mouse or touch
-      function onMove(clientX, clientY) {
+      // Process pointer (mouse/touch) movement.
+      function onMove(clientX, clientY){
         if(animating) return;
-        if(lastX === null || lastY === null) {
+        if(lastX === null || lastY === null){
           lastX = clientX;
           lastY = clientY;
           return;
         }
         var dx = clientX - lastX;
         var dy = clientY - lastY;
-        var distance = Math.sqrt(dx*dx + dy*dy);
-        if(distance >= swipeThreshold) {
+        var distance = Math.sqrt(dx * dx + dy * dy);
+        if(distance >= swipeThreshold){
           triggerTransition();
-          // Reset the last position to the current one
           lastX = clientX;
           lastY = clientY;
         }
       }
       
-      // Attach mousemove event for desktop
+      // Listen for mousemove events.
       dollContainer.addEventListener("mousemove", function(e){
          onMove(e.clientX, e.clientY);
       });
       
-      // Attach touchmove event for mobile devices
+      // Listen for touchmove events.
       dollContainer.addEventListener("touchmove", function(e){
          if(e.touches.length > 0){
            var touch = e.touches[0];
@@ -171,42 +167,38 @@
          }
       });
       
-      // Optionally, reset last positions every second to avoid accidental triggers
-      setInterval(function(){
-        lastX = null;
-        lastY = null;
-      }, 1000);
+      // Optionally reset last positions every second.
+      setInterval(function(){ lastX = null; lastY = null; }, 1000);
       
-      // Transition: animate the current doll off-screen, update index & text, then animate the new doll in.
+      // Function to trigger the transition to the next doll.
       function triggerTransition(){
         if(animating) return;
         animating = true;
         
-        // Animate the dollContainer to fly left while fading out.
+        // Animate dollContainer off-screen to the left and fade out.
         TweenMax.to(dollContainer, 0.5, {
           x: "-100%",
           opacity: 0,
           ease: Power2.easeIn,
           onComplete: function(){
-            // Advance to the next doll if not at final doll.
-            if(currentIndex < totalDolls - 1) { currentIndex++; }
-            // Update the text message.
+            if(currentIndex < totalDolls - 1){
+              currentIndex++;
+            }
+            // Update the text.
             textDisplay.textContent = messages[currentIndex];
-            // Update the doll image.
+            // Update the doll image source.
             dollImg.src = dollFiles[currentIndex];
             dollImg.onload = function(){
-              // Ensure the wrapper height adjusts to the new image.
               dollWrapper.style.height = dollImg.offsetHeight + "px";
             };
-            // Reset container's horizontal position.
+            // Reset horizontal position.
             TweenMax.set(dollContainer, { x: 0 });
-            // Animate the container coming in from the right with bounce.
+            // Animate dollContainer in from the right with bounce.
             TweenMax.fromTo(dollContainer, 0.5, { x: "100%", opacity: 0 }, {
               x: "0%",
               opacity: 1,
               ease: Bounce.easeOut,
               onComplete: function(){
-                // On final doll, trigger confetti.
                 if(currentIndex === totalDolls - 1){
                   confetti({
                     particleCount: 150,
@@ -217,7 +209,7 @@
                 animating = false;
               }
             });
-            // Apply new scale for the nested doll effect.
+            // Update scale for nested doll effect.
             TweenMax.to(dollContainer, 0.3, { scale: scaleFactors[currentIndex], ease: Power2.easeOut });
           }
         });
